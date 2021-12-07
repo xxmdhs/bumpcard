@@ -18,7 +18,7 @@ type ActionData struct {
 	TID       int
 }
 
-var actionReg = regexp.MustCompile(`.*<td><a href\="home.php\?mod=space&amp;uid\=(\d{1,15})" target\="_blank">(.{1,10}?)</a></td>.*\n.*<td><span title="(.{1,30}?)">.*</span></td>.*\n.*<td >(.{1,30}?)</td>`)
+var actionReg = regexp.MustCompile(`.*<td><a href\="home.php\?mod=space&amp;uid\=(\d{1,15})" target\="_blank">(.{1,10}?)</a></td>.*\n.*<td>.*(\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}).*</td>.*\n.*<td >(.{1,30}?)</td>`)
 
 func ParseActionData(xmldata string, tid int) []ActionData {
 	ret := []ActionData{}
@@ -27,7 +27,7 @@ func ParseActionData(xmldata string, tid int) []ActionData {
 			Operation: v[4],
 			Time: func() int64 {
 				//2021-12-6 22:42
-				t, err := time.Parse("2006-01-2 15:04", v[3])
+				t, err := time.Parse("2006-1-2 15:04", v[3])
 				if err != nil {
 					return 0
 				}
