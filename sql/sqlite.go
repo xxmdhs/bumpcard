@@ -26,7 +26,7 @@ func NewSql(filename string) (*DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("newSql: %w", err)
 	}
-	_, err = db.db.Exec(`CREATE TABLE IF NOT EXISTS actions (id PRIMARY KEY
+	_, err = db.db.Exec(`CREATE TABLE IF NOT EXISTS actions (id INTEGER PRIMARY KEY AUTOINCREMENT
 		, operation TEXT NOT NULL
 		, time INTEGER NOT NULL
 		, uid INTEGER NOT NULL

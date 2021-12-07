@@ -39,7 +39,7 @@ func ParseActionData(xmldata string, tid int) []ActionData {
 				return t.In(l).Unix()
 			}(),
 			UID: func() int {
-				i, _ := strconv.Atoi(v[2])
+				i, _ := strconv.Atoi(v[1])
 				return i
 			}(),
 			Name: v[2],
