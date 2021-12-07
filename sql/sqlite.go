@@ -7,8 +7,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sqlx.DB
-
 type ActionData struct {
 	Operation string `db:"operation"`
 	Time      int64  `db:"time"`
@@ -17,13 +15,18 @@ type ActionData struct {
 	TID       int    `db:"tid"`
 }
 
-func init() {
+type DB struct {
+	db *sqlx.DB
+}
+
+func NewSql(filename string) (*DB, error) {
 	var err error
-	db, err = sqlx.Connect("sqlite3", "./data.db?_txlock=IMMEDIATE&_journal_mode=WAL")
+	db := &DB{}
+	db.db, err = sqlx.Connect("sqlite3", "./data.db?_txlock=IMMEDIATE&_journal_mode=WAL")
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("newSql: %w", err)
 	}
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS actions (id PRIMARY KEY
+	_, err = db.db.Exec(`CREATE TABLE IF NOT EXISTS actions (id PRIMARY KEY
 		, operation TEXT NOT NULL
 		, time INTEGER NOT NULL
 		, uid INTEGER NOT NULL
@@ -31,14 +34,19 @@ func init() {
 		, tid INTEGER NOT NULL
 		)`)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("newSql: %w", err)
 	}
+	return db, nil
 }
 
-func Save(data ActionData) error {
-	_, err := db.NamedExec(`INSERT INTO actions (operation, time, uid, name, tid) VALUES (:operation, :time, :uid, :name, :tid)`, data)
+func (db *DB) Save(data ActionData) error {
+	_, err := db.db.NamedExec(`INSERT INTO actions (operation, time, uid, name, tid) VALUES (:operation, :time, :uid, :name, :tid)`, data)
 	if err != nil {
 		return fmt.Errorf("Save: %w", err)
 	}
 	return nil
+}
+
+func (db *DB) Close() error {
+	return db.db.Close()
 }

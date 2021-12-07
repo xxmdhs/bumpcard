@@ -17,12 +17,18 @@ const fid = 179
 func main() {
 	w := sync.WaitGroup{}
 	t := 0
+
+	s, err := sql.NewSql("data.db")
+	if err != nil {
+		panic(err)
+	}
+
 	for i := 1; i <= maxpage; i++ {
 		list, err := retry(forumdisplay.GetForumList, []interface{}{int(fid), i}, 5, func(e error) {
 			log.Println(e)
 		})
 		if err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
 		l := list[0].([]forumdisplay.Thread)
 		for _, v := range l {
@@ -35,7 +41,7 @@ func main() {
 					log.Println(e)
 				})
 				if err != nil {
-					log.Fatal(err)
+					panic(err)
 				}
 				l := list[0].([]forumdisplay.ActionData)
 				for _, v := range l {
@@ -46,7 +52,9 @@ func main() {
 						Name:      v.Name,
 						TID:       v.TID,
 					}
-					err := sql.Save(d)
+					_, err := retry(s.Save, []interface{}{d}, 3, func(e error) {
+						log.Println(e)
+					})
 					if err != nil {
 						panic(err)
 					}
