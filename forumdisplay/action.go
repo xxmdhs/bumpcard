@@ -20,6 +20,8 @@ type ActionData struct {
 
 var actionReg = regexp.MustCompile(`.*<td><a href\="home.php\?mod=space&amp;uid\=(\d{1,15})" target\="_blank">(.{1,10}?)</a></td>.*\n.*<td>.*(\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}).*</td>.*\n.*<td >(.{1,30}?)</td>`)
 
+var shanghai, _ = time.LoadLocation("Asia/Shanghai")
+
 func ParseActionData(xmldata string, tid int) []ActionData {
 	ret := []ActionData{}
 	for _, v := range actionReg.FindAllStringSubmatch(xmldata, -1) {
@@ -27,16 +29,11 @@ func ParseActionData(xmldata string, tid int) []ActionData {
 			Operation: v[4],
 			Time: func() int64 {
 				//2021-12-6 22:42
-				t, err := time.Parse("2006-1-2 15:04", v[3])
+				t, err := time.ParseInLocation("2006-1-2 15:04", v[3], shanghai)
 				if err != nil {
 					return 0
 				}
-				//Asia/Shanghai
-				l, err := time.LoadLocation("Asia/Shanghai")
-				if err != nil {
-					return 0
-				}
-				return t.In(l).Unix()
+				return t.Unix()
 			}(),
 			UID: func() int {
 				i, _ := strconv.Atoi(v[1])
