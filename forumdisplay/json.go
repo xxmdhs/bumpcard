@@ -8,6 +8,11 @@ type thread struct {
 
 type threadVariables struct {
 	ForumThreadlist []threadVariablesForumThreadlist `json:"forum_threadlist"`
+	Forum           ThreadForum                      `json:"forum"`
+}
+
+type ThreadForum struct {
+	Threads string `json:"threads"`
 }
 
 type threadVariablesForumThreadlist struct {

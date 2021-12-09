@@ -32,6 +32,15 @@ func main() {
 func get(s *sql.DB, fid int) {
 	w := sync.WaitGroup{}
 	t := 0
+	var maxpage int
+	err := retry.Do(func() (err error) {
+		maxpage, err = forumdisplay.GetForumPage(fid)
+		return err
+	}, retryOpts...)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("fid %v,总页数: %d", fid, maxpage)
 	for i := 1; i <= maxpage; i++ {
 		var l []forumdisplay.Thread
 		err := retry.Do(func() (err error) {
@@ -89,7 +98,6 @@ func get(s *sql.DB, fid int) {
 }
 
 var (
-	maxpage    int
 	threads    int
 	serverport int
 	update     bool
@@ -104,7 +112,6 @@ var retryOpts = []retry.Option{
 }
 
 func init() {
-	flag.IntVar(&maxpage, "maxpage", 10, "max page")
 	flag.IntVar(&threads, "threads", 6, "threads")
 	flag.IntVar(&serverport, "serverport", 2517, "server port")
 	flag.BoolVar(&update, "update", false, "update")
