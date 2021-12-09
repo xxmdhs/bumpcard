@@ -44,6 +44,9 @@ func getforumData(fid int, page int, cookie string) (*thread, error) {
 	q.Set("page", strconv.Itoa(page))
 	q.Set("orderby", "dateline")
 	b, err := httpGet("https://www.mcbbs.net/api/mobile/index.php?"+q.Encode(), cookie)
+	if err != nil {
+		return nil, fmt.Errorf("getforumData: %w", err)
+	}
 	var d thread
 	err = json.Unmarshal(b, &d)
 	if err != nil {

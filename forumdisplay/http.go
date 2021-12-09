@@ -20,9 +20,20 @@ func httpGet(url, cookie string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("httpGet: %w", err)
 	}
+	if rep.StatusCode != 200 {
+		return nil, fmt.Errorf("httpGet: %w", &Errhttpcode{rep.StatusCode})
+	}
 	b, err := io.ReadAll(rep.Body)
 	if err != nil {
 		return nil, fmt.Errorf("httpGet: %w", err)
 	}
 	return b, nil
+}
+
+type Errhttpcode struct {
+	code int
+}
+
+func (e *Errhttpcode) Error() string {
+	return fmt.Sprintf("http code %d", e.code)
 }
