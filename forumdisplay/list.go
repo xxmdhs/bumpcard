@@ -3,7 +3,6 @@ package forumdisplay
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -20,8 +19,8 @@ var c = http.Client{
 	Timeout: 10 * time.Second,
 }
 
-func GetForumList(fid int, page int) ([]Thread, error) {
-	d, err := getforumData(fid, page)
+func GetForumList(fid int, page int, cookie string) ([]Thread, error) {
+	d, err := getforumData(fid, page, cookie)
 	if err != nil {
 		return nil, fmt.Errorf("GetForumList: %w", err)
 	}
@@ -36,7 +35,7 @@ func GetForumList(fid int, page int) ([]Thread, error) {
 	return t, nil
 }
 
-func getforumData(fid int, page int) (*thread, error) {
+func getforumData(fid int, page int, cookie string) (*thread, error) {
 	//version=4&module=forumdisplay&fid=179&page=1&orderby=dateline
 	q := url.Values{}
 	q.Set("version", "4")
@@ -44,17 +43,7 @@ func getforumData(fid int, page int) (*thread, error) {
 	q.Set("fid", strconv.Itoa(fid))
 	q.Set("page", strconv.Itoa(page))
 	q.Set("orderby", "dateline")
-	resp, err := c.Get("https://www.mcbbs.net/api/mobile/index.php?" + q.Encode())
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		return nil, fmt.Errorf("getforumData: %w", err)
-	}
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("getforumData: %w", err)
-	}
+	b, err := httpGet("https://www.mcbbs.net/api/mobile/index.php?"+q.Encode(), cookie)
 	var d thread
 	err = json.Unmarshal(b, &d)
 	if err != nil {
@@ -63,8 +52,8 @@ func getforumData(fid int, page int) (*thread, error) {
 	return &d, nil
 }
 
-func GetForumPage(fid int) (int, error) {
-	t, err := getforumData(fid, 1)
+func GetForumPage(fid int, cookie string) (int, error) {
+	t, err := getforumData(fid, 1, cookie)
 	if err != nil {
 		return 0, fmt.Errorf("GetForumPage: %w", err)
 	}

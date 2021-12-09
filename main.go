@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -35,7 +36,7 @@ func get(s *sql.DB, fid int) {
 	t := 0
 	var maxpage int
 	err := retry.Do(func() (err error) {
-		maxpage, err = forumdisplay.GetForumPage(fid)
+		maxpage, err = forumdisplay.GetForumPage(fid, cookie)
 		return err
 	}, retryOpts...)
 	if err != nil {
@@ -45,7 +46,7 @@ func get(s *sql.DB, fid int) {
 	for i := 1; i <= maxpage; i++ {
 		var l []forumdisplay.Thread
 		err := retry.Do(func() (err error) {
-			l, err = forumdisplay.GetForumList(fid, i)
+			l, err = forumdisplay.GetForumList(fid, i, cookie)
 			return err
 		}, retryOpts...)
 		if err != nil {
@@ -59,7 +60,7 @@ func get(s *sql.DB, fid int) {
 				tid, _ := strconv.Atoi(v.Tid)
 				var l []forumdisplay.ActionData
 				err := retry.Do(func() (err error) {
-					l, err = forumdisplay.GetActionData(tid)
+					l, err = forumdisplay.GetActionData(tid, cookie)
 					return err
 				}, retryOpts...)
 				if err != nil {
@@ -102,6 +103,7 @@ var (
 	threads    int
 	serverport int
 	update     bool
+	cookie     string
 )
 
 var retryOpts = []retry.Option{
@@ -117,4 +119,11 @@ func init() {
 	flag.IntVar(&serverport, "serverport", 2517, "server port")
 	flag.BoolVar(&update, "update", false, "update")
 	flag.Parse()
+	var err error
+	var c []byte
+	c, err = os.ReadFile("cookie.txt")
+	if err != nil {
+		panic(err)
+	}
+	cookie = string(c)
 }

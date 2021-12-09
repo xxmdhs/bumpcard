@@ -2,7 +2,6 @@ package forumdisplay
 
 import (
 	"fmt"
-	"io"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -46,7 +45,7 @@ func ParseActionData(xmldata string, tid int) []ActionData {
 	return ret
 }
 
-func GetActionData(tid int) ([]ActionData, error) {
+func GetActionData(tid int, cookie string) ([]ActionData, error) {
 	//https://www.mcbbs.net/forum.php?mod=misc&action=viewthreadmod&tid=1276429&infloat=yes&handlekey=viewthreadmod&inajax=1&ajaxtarget=fwin_content_viewthreadmod
 	v := url.Values{}
 	v.Set("mod", "misc")
@@ -56,14 +55,7 @@ func GetActionData(tid int) ([]ActionData, error) {
 	v.Set("handlekey", "viewthreadmod")
 	v.Set("inajax", "1")
 	v.Set("ajaxtarget", "fwin_content_viewthreadmod")
-	resp, err := c.Get("https://www.mcbbs.net/forum.php?" + v.Encode())
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		return nil, fmt.Errorf("GetActionData: %w", err)
-	}
-	xmldata, err := io.ReadAll(resp.Body)
+	xmldata, err := httpGet("https://www.mcbbs.net/forum.php?"+v.Encode(), cookie)
 	if err != nil {
 		return nil, fmt.Errorf("GetActionData: %w", err)
 	}
