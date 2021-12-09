@@ -59,7 +59,7 @@
                 continue
             }
             if (m[v.tid] == undefined) {
-                m[v.tid] = { count: 0, lastime: v.time }
+                m[v.tid] = { count: 1, lastime: v.time }
             } else {
                 m[v.tid].count++
                 v.time > m[v.tid].lastime && (m[v.tid].lastime = v.time)
