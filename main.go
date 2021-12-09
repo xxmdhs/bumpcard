@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/xmdhs/bumpcard/forumdisplay"
-	"github.com/xmdhs/bumpcard/server"
-	"github.com/xmdhs/bumpcard/sql"
+	"github.com/xxmdhs/bumpcard/forumdisplay"
+	"github.com/xxmdhs/bumpcard/server"
+	"github.com/xxmdhs/bumpcard/sql"
 )
 
 const fid = 179

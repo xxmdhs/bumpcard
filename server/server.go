@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xmdhs/bumpcard/sql"
+	"github.com/xxmdhs/bumpcard/sql"
 )
 
 func Server(port int, db *sql.DB) {

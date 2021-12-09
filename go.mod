@@ -1,4 +1,4 @@
-module github.com/xmdhs/bumpcard
+module github.com/xxmdhs/bumpcard
 
 go 1.17
 
