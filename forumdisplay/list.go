@@ -72,5 +72,5 @@ func GetForumPage(fid int) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("GetForumPage: %w", err)
 	}
-	return i, nil
+	return i / 10, nil
 }
