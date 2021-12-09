@@ -13,7 +13,7 @@ import (
 	"github.com/xxmdhs/bumpcard/sql"
 )
 
-const fid = 179
+var fid = []int{179, 296}
 
 func main() {
 	s, err := sql.NewSql("data.db")
@@ -21,64 +21,70 @@ func main() {
 		panic(err)
 	}
 	if update {
-		w := sync.WaitGroup{}
-		t := 0
-		for i := 1; i <= maxpage; i++ {
-			var l []forumdisplay.Thread
-			err := retry.Do(func() (err error) {
-				l, err = forumdisplay.GetForumList(fid, i)
-				return err
-			}, retryOpts...)
-			if err != nil {
-				panic(err)
-			}
-			for _, v := range l {
-				t++
-				w.Add(1)
-				go func(v forumdisplay.Thread) {
-					defer w.Done()
-					tid, _ := strconv.Atoi(v.Tid)
-					var l []forumdisplay.ActionData
-					err := retry.Do(func() (err error) {
-						l, err = forumdisplay.GetActionData(tid)
-						return err
-					}, retryOpts...)
-					if err != nil {
-						panic(err)
-					}
-					err = retry.Do(func() (err error) {
-						return s.Del(tid)
-					}, retryOpts...)
-					if err != nil {
-						panic(err)
-					}
-					for _, v := range l {
-						d := sql.ActionData{
-							Operation: v.Operation,
-							Time:      v.Time,
-							UID:       v.UID,
-							Name:      v.Name,
-							TID:       v.TID,
-						}
-
-						err := retry.Do(func() (err error) {
-							return s.Save(d)
-						}, retryOpts...)
-						if err != nil {
-							panic(err)
-						}
-					}
-				}(v)
-				if t >= threads {
-					w.Wait()
-					time.Sleep(1 * time.Second)
-					t = 0
-				}
-			}
-			log.Println(i, "完成")
+		for _, v := range fid {
+			get(s, v)
 		}
 	} else {
 		server.Server(serverport, s)
+	}
+}
+
+func get(s *sql.DB, fid int) {
+	w := sync.WaitGroup{}
+	t := 0
+	for i := 1; i <= maxpage; i++ {
+		var l []forumdisplay.Thread
+		err := retry.Do(func() (err error) {
+			l, err = forumdisplay.GetForumList(fid, i)
+			return err
+		}, retryOpts...)
+		if err != nil {
+			panic(err)
+		}
+		for _, v := range l {
+			t++
+			w.Add(1)
+			go func(v forumdisplay.Thread) {
+				defer w.Done()
+				tid, _ := strconv.Atoi(v.Tid)
+				var l []forumdisplay.ActionData
+				err := retry.Do(func() (err error) {
+					l, err = forumdisplay.GetActionData(tid)
+					return err
+				}, retryOpts...)
+				if err != nil {
+					panic(err)
+				}
+				err = retry.Do(func() (err error) {
+					return s.Del(tid)
+				}, retryOpts...)
+				if err != nil {
+					panic(err)
+				}
+				for _, v := range l {
+					d := sql.ActionData{
+						Operation: v.Operation,
+						Time:      v.Time,
+						UID:       v.UID,
+						Name:      v.Name,
+						TID:       v.TID,
+					}
+
+					err := retry.Do(func() (err error) {
+						return s.Save(d)
+					}, retryOpts...)
+					if err != nil {
+						panic(err)
+					}
+				}
+			}(v)
+			if t >= threads {
+				w.Wait()
+				time.Sleep(1 * time.Second)
+				t = 0
+			}
+		}
+		log.Printf("fid: %v, page: %v", fid, i)
 	}
 }
 
