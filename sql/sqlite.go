@@ -8,11 +8,11 @@ import (
 )
 
 type ActionData struct {
-	Operation string `db:"operation"`
-	Time      int64  `db:"time"`
-	UID       int    `db:"uid"`
-	Name      string `db:"name"`
-	TID       int    `db:"tid"`
+	Operation string `db:"operation" json:"operation"`
+	Time      int64  `db:"time" json:"time"`
+	UID       int    `db:"uid" json:"uid"`
+	Name      string `db:"name" json:"name"`
+	TID       int    `db:"tid" json:"tid"`
 }
 
 type DB struct {
@@ -49,4 +49,13 @@ func (db *DB) Save(data ActionData) error {
 
 func (db *DB) Close() error {
 	return db.db.Close()
+}
+
+func (db *DB) GetForUID(uid int) ([]ActionData, error) {
+	var data []ActionData
+	err := db.db.Select(&data, `SELECT operation, time, uid, name, tid FROM actions WHERE uid = ?`, uid)
+	if err != nil {
+		return nil, fmt.Errorf("GetForUID: %w", err)
+	}
+	return data, nil
 }

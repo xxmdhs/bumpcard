@@ -3,110 +3,98 @@ package main
 import (
 	"flag"
 	"log"
-	"reflect"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/xmdhs/bumpcard/forumdisplay"
+	"github.com/xmdhs/bumpcard/server"
 	"github.com/xmdhs/bumpcard/sql"
 )
 
 const fid = 179
 
 func main() {
-	w := sync.WaitGroup{}
-	t := 0
-
 	s, err := sql.NewSql("data.db")
 	if err != nil {
 		panic(err)
 	}
-
-	for i := 1; i <= maxpage; i++ {
-		list, err := retry(forumdisplay.GetForumList, []interface{}{int(fid), i}, 5, func(e error) {
-			log.Println(e)
-		})
-		if err != nil {
-			panic(err)
-		}
-		l := list[0].([]forumdisplay.Thread)
-		for _, v := range l {
-			t++
-			w.Add(1)
-			go func(v forumdisplay.Thread) {
-				defer w.Done()
-				tid, _ := strconv.Atoi(v.Tid)
-				list, err := retry(forumdisplay.GetActionData, []interface{}{tid}, 5, func(e error) {
-					log.Println(e)
-				})
-				if err != nil {
-					panic(err)
-				}
-				l := list[0].([]forumdisplay.ActionData)
-				for _, v := range l {
-					d := sql.ActionData{
-						Operation: v.Operation,
-						Time:      v.Time,
-						UID:       v.UID,
-						Name:      v.Name,
-						TID:       v.TID,
-					}
-					_, err := retry(s.Save, []interface{}{d}, 3, func(e error) {
-						log.Println(e)
-					})
+	if update {
+		w := sync.WaitGroup{}
+		t := 0
+		for i := 1; i <= maxpage; i++ {
+			var l []forumdisplay.Thread
+			err := retry.Do(func() (err error) {
+				l, err = forumdisplay.GetForumList(fid, i)
+				return err
+			}, retryOpts...)
+			if err != nil {
+				panic(err)
+			}
+			for _, v := range l {
+				t++
+				w.Add(1)
+				go func(v forumdisplay.Thread) {
+					defer w.Done()
+					tid, _ := strconv.Atoi(v.Tid)
+					var l []forumdisplay.ActionData
+					err := retry.Do(func() (err error) {
+						l, err = forumdisplay.GetActionData(tid)
+						return err
+					}, retryOpts...)
 					if err != nil {
 						panic(err)
 					}
+					for _, v := range l {
+						d := sql.ActionData{
+							Operation: v.Operation,
+							Time:      v.Time,
+							UID:       v.UID,
+							Name:      v.Name,
+							TID:       v.TID,
+						}
+
+						err := retry.Do(func() (err error) {
+							return s.Save(d)
+						}, retryOpts...)
+						if err != nil {
+							panic(err)
+						}
+					}
+				}(v)
+				if t >= threads {
+					w.Wait()
+					time.Sleep(1 * time.Second)
+					t = 0
 				}
-			}(v)
-			if t >= threads {
-				w.Wait()
-				time.Sleep(1 * time.Second)
-				t = 0
 			}
+			log.Println(i, "完成")
 		}
-		log.Println(i, "完成")
+	} else {
+		server.Server(serverport, s)
 	}
 }
 
 var (
-	maxpage int
-	threads int
+	maxpage    int
+	threads    int
+	serverport int
+	update     bool
 )
+
+var retryOpts = []retry.Option{
+	retry.Attempts(3),
+	retry.Delay(time.Second * 2),
+	retry.OnRetry(func(n uint, err error) {
+		log.Printf("retry %d: %v", n, err)
+	}),
+}
 
 func init() {
 	flag.IntVar(&maxpage, "maxpage", 10, "max page")
 	flag.IntVar(&threads, "threads", 6, "threads")
+	flag.IntVar(&serverport, "serverport", 2517, "server port")
+	flag.BoolVar(&update, "update", false, "update")
 	flag.Parse()
-}
-
-func retry(f interface{}, args []interface{}, retry int, elog func(error)) ([]interface{}, error) {
-	r := reflect.ValueOf(f)
-	if r.Kind() != reflect.Func {
-		panic("need function")
-	}
-	rargs := make([]reflect.Value, len(args))
-	for i, arg := range args {
-		rargs[i] = reflect.ValueOf(arg)
-	}
-	var err error
-	for i := 0; i < retry; i++ {
-		rv := r.Call(rargs)
-		e := rv[len(rv)-1]
-		if !e.IsNil() {
-			ok := false
-			err, ok = e.Interface().(error)
-			if ok {
-				elog(err)
-				continue
-			}
-		}
-		ilist := make([]interface{}, len(rv))
-		for i, v := range rv {
-			ilist[i] = v.Interface()
-		}
-		return ilist, nil
-	}
-	return nil, err
 }
