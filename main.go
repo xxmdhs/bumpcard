@@ -46,6 +46,12 @@ func main() {
 					if err != nil {
 						panic(err)
 					}
+					err = retry.Do(func() (err error) {
+						return s.Del(tid)
+					}, retryOpts...)
+					if err != nil {
+						panic(err)
+					}
 					for _, v := range l {
 						d := sql.ActionData{
 							Operation: v.Operation,
