@@ -20,6 +20,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer s.Close()
 	if update {
 		for _, v := range fid {
 			get(s, v)
