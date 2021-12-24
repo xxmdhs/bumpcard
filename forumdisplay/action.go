@@ -17,7 +17,7 @@ type ActionData struct {
 	TID       int
 }
 
-var actionReg = regexp.MustCompile(`.*<td><a href\="home.php\?mod=space&amp;uid\=(\d{1,15})" target\="_blank">(.{1,10}?)</a></td>.*\n.*<td>.*(\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}).*</td>.*\n.*<td >(.{1,30}?)</td>`)
+var actionReg = regexp.MustCompile(`.*<td><a href\="home.php\?mod=space&amp;uid\=(\d{1,20})" target\="_blank">(.{1,25}?)</a></td>.*\n.*<td>.*(\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}).*</td>.*\n.*<td >(.{1,30}?)</td>`)
 
 var shanghai, _ = time.LoadLocation("Asia/Shanghai")
 
