@@ -9,6 +9,10 @@
 
 (async () => {
     const uid = getuid();
+    if (uid === null) {
+        alert("无法获取 uid")
+        return;
+    }
     let d: data = {
         data: [],
         msg: "",
@@ -110,10 +114,10 @@
         return m < 10 ? '0' + String(m) : String(m);
     }
 
-    function getuid(): string {
+    function getuid(): string | null {
         let u = new URL(location.href)
         let uid = u.searchParams.get('uid')
-        if (uid.length > 0) {
+        if (uid && uid.length > 0) {
             return uid
         }
         u = new URL(location.href)
