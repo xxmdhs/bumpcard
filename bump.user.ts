@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         bump
-// @version      0.0.1
+// @version      0.0.2
 // @include      https://www.mcbbs.net/home.php?mod=space&uid=*
 // @author       xmdhs
 // @description  bump。
@@ -8,8 +8,7 @@
 // ==/UserScript==
 
 (async () => {
-    let u = new URL(location.href)
-    const uid = u.searchParams.get('uid')
+    const uid = getuid();
     let d: data = {
         data: [],
         msg: "",
@@ -109,5 +108,15 @@
     }
     function addZero(m: number): string {
         return m < 10 ? '0' + String(m) : String(m);
+    }
+
+    function getuid(): string {
+        let u = new URL(location.href)
+        let uid = u.searchParams.get('uid')
+        if (uid.length > 0) {
+            return uid
+        }
+        u = new URL(location.href)
+        return u.searchParams.get('uid')
     }
 })()
