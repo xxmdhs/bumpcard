@@ -1,9 +1,11 @@
 // ==UserScript==
-// @name         bump
-// @version      0.0.2
-// @include      https://www.mcbbs.net/home.php?mod=space&uid=*
+// @name         提升卡记录
+// @version      0.0.3
+// @include      https://www.mcbbs.net/home.php?mod=space*
+// @include      https://www.mcbbs.net/?*
 // @author       xmdhs
-// @description  bump。
+// @license MIT
+// @description  查看用户的提升卡使用记录
 // @namespace https://greasyfork.org/users/166541
 // ==/UserScript==
 
@@ -120,7 +122,11 @@
         if (uid && uid.length > 0) {
             return uid
         }
-        u = new URL(location.href)
-        return u.searchParams.get('uid')
+        let dom = document.querySelector("#uhd > div > div > a")
+        if ((dom as HTMLAnchorElement).href.length > 0) {
+            u = new URL((dom as HTMLAnchorElement).href)
+            return u.searchParams.get('uid')
+        }
+        return null
     }
 })()
