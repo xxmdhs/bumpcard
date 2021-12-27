@@ -14,7 +14,7 @@ import (
 	"github.com/xxmdhs/bumpcard/sql"
 )
 
-var fid = []int{179, 296}
+var fid = []int{179, 296, 647, 436}
 
 func main() {
 	s, err := sql.NewSql("data.db")
