@@ -1,18 +1,16 @@
 package forumdisplay
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 )
 
 type Thread struct {
-	Subject  string `json:"subject"`
-	Tid      string `json:"tid"`
-	Authorid string `json:"authorid"`
+	Subject string `json:"subject"`
+	Tid     string `json:"tid"`
 }
 
 var c = http.Client{
@@ -20,49 +18,37 @@ var c = http.Client{
 }
 
 func GetForumList(fid int, page int, cookie string) ([]Thread, error) {
-	d, err := getforumData(fid, page, cookie)
+	d, err := getThreadData(strconv.Itoa(fid), cookie, page)
 	if err != nil {
 		return nil, fmt.Errorf("GetForumList: %w", err)
 	}
-	t := make([]Thread, 0, len(d.Variables.ForumThreadlist))
-	for _, v := range d.Variables.ForumThreadlist {
+	t := make([]Thread, 0, len(d))
+	for _, v := range d {
 		t = append(t, Thread{
-			Subject:  v.Subject,
-			Tid:      v.Tid,
-			Authorid: v.Authorid,
+			Subject: v.titile,
+			Tid:     v.tid,
 		})
 	}
 	return t, nil
 }
 
-func getforumData(fid int, page int, cookie string) (*thread, error) {
-	//version=4&module=forumdisplay&fid=179&page=1&orderby=dateline
-	q := url.Values{}
-	q.Set("version", "4")
-	q.Set("module", "forumdisplay")
-	q.Set("fid", strconv.Itoa(fid))
-	q.Set("page", strconv.Itoa(page))
-	q.Set("orderby", "dateline")
-	b, err := httpGet("https://www.mcbbs.net/api/mobile/index.php?"+q.Encode(), cookie)
-	if err != nil {
-		return nil, fmt.Errorf("getforumData: %w", err)
-	}
-	var d thread
-	err = json.Unmarshal(b, &d)
-	if err != nil {
-		return nil, fmt.Errorf("getforumData: %w", err)
-	}
-	return &d, nil
-}
+var pageReg = regexp.MustCompile(`<span title="共 (\d{1,5}?) 页"> / \d{1,7} 页</span>`)
+
+var ErrNotFound = fmt.Errorf("NotFound")
 
 func GetForumPage(fid int, cookie string) (int, error) {
-	t, err := getforumData(fid, 1, cookie)
+	b, err := httpGet(`https://www.mcbbs.net/forum.php?mod=forumdisplay&fid=`+strconv.Itoa(fid), cookie)
 	if err != nil {
 		return 0, fmt.Errorf("GetForumPage: %w", err)
 	}
-	i, err := strconv.Atoi(t.Variables.Forum.Threads)
+	l := pageReg.FindSubmatch(b)
+	if len(l) != 2 {
+		return 0, ErrNotFound
+	}
+
+	i, err := strconv.Atoi(string(l[1]))
 	if err != nil {
 		return 0, fmt.Errorf("GetForumPage: %w", err)
 	}
-	return i / 10, nil
+	return i, nil
 }
