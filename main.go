@@ -107,7 +107,7 @@ var (
 )
 
 var retryOpts = []retry.Option{
-	retry.Attempts(3),
+	retry.Attempts(7),
 	retry.Delay(time.Second * 2),
 	retry.OnRetry(func(n uint, err error) {
 		log.Printf("retry %d: %v", n, err)
