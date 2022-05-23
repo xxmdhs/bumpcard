@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         提升卡记录
-// @version      0.0.3
+// @version      0.0.5
 // @include      https://www.mcbbs.net/home.php?mod=space*
 // @include      https://www.mcbbs.net/?*
 // @author       xmdhs
@@ -20,18 +20,13 @@
         msg: "",
         code: 0
     }
-    let f = await fetch(`https://auto.xmdhs.top/getforuid?uid=` + uid)
+    let f = await fetch(`https://auto.xmdhs.com/getforuid?uid=` + uid)
     d = await f.json()
     if (d.code != 0) {
         console.warn(d.msg)
         alert(d.msg)
         return
     }
-    if (d.data == null) {
-        console.log("没有数据")
-        return
-    }
-
     let p = document.querySelector("#ct > div > div.bm.bw0 > div > div.bm_c.u_profile")
     let div = document.createElement("div")
     p ? p.appendChild(div) : console.warn("没有找到")
@@ -39,6 +34,10 @@
     text.className = "mbn"
     text.innerText = "提升卡记录"
     div.appendChild(text)
+    if (d.data == null) {
+        console.log("没有数据")
+        return
+    }
     div.appendChild(makeTable(d.data))
     let psts = document.querySelector("#psts")
     psts && (psts.className = "pbm mbm bbda cl")
