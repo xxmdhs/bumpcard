@@ -32,7 +32,9 @@ func NewSql(filename string) (*DB, error) {
 		, uid INTEGER NOT NULL
 		, name TEXT NOT NULL
 		, tid INTEGER NOT NULL
-		)`)
+		);
+		CREATE INDEX IF NOT EXISTS actions_uid on actions (uid);
+		`)
 	if err != nil {
 		return nil, fmt.Errorf("newSql: %w", err)
 	}
