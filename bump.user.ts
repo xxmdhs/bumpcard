@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         提升卡记录
-// @version      0.0.5
+// @version      0.1.2
 // @include      https://www.mcbbs.net/home.php?mod=space*
 // @include      https://www.mcbbs.net/?*
 // @author       xmdhs
@@ -10,37 +10,70 @@
 // ==/UserScript==
 
 (async () => {
-    const uid = getuid();
-    if (uid === null) {
-        alert("无法获取 uid")
-        return;
-    }
-    let d: data = {
-        data: [],
-        msg: "",
-        code: 0
-    }
-    let f = await fetch(`https://auto.xmdhs.com/getforuid?uid=` + uid)
-    d = await f.json()
-    if (d.code != 0) {
-        console.warn(d.msg)
-        alert(d.msg)
+    if (location.href.startsWith("https://www.mcbbs.net/home.php?mod=space") || location.href.startsWith("https://www.mcbbs.net/?")) {
+        await userPage()
         return
+    } else {
+        let doms: NodeListOf<Element>;
+        try {
+            doms = document.querySelectorAll("div.pi > div > a.xw1")
+        } catch (e) {
+            return
+        }
+        let i = 0
+        for (const dom of doms) {
+            i++
+            if (!(dom instanceof HTMLAnchorElement)) {
+                continue
+            }
+            let u = new URL(dom.href);
+            const uid = u.searchParams.get("uid");
+            if (!uid) continue;
+            dosome(uid, dom, 0)
+            if (i > 5) {
+                await new Promise((r) => setTimeout(r, 1000))
+                i = 0
+            }
+        }
     }
-    let p = document.querySelector("#ct > div > div.bm.bw0 > div > div.bm_c.u_profile")
-    let div = document.createElement("div")
-    p ? p.appendChild(div) : console.warn("没有找到")
-    let text = document.createElement("h2")
-    text.className = "mbn"
-    text.innerText = "提升卡记录"
-    div.appendChild(text)
-    if (d.data == null) {
-        console.log("没有数据")
-        return
+
+
+    async function userPage() {
+        const uid = getuid();
+        if (uid === null) {
+            alert("无法获取 uid")
+            return;
+        }
+        let d: data = {
+            data: [],
+            msg: "",
+            code: 0
+        }
+        let f = await fetch(`https://auto.xmdhs.com/getforuid?uid=` + uid)
+        d = await f.json()
+        if (d.code != 0) {
+            console.warn(d.msg)
+            alert(d.msg)
+            return
+        }
+        const profile = document.querySelector(".bm_c.u_profile")
+        if (profile && profile.lastElementChild) {
+            profile.lastElementChild.className = "pbm mbm bbda cl"
+        }
+        const p = document.querySelector("#ct > div > div.bm.bw0 > div > div.bm_c.u_profile")
+        const div = document.createElement("div")
+        p ? p.appendChild(div) : console.warn("没有找到")
+        const text = document.createElement("h2")
+        text.className = "mbn"
+        text.innerText = "提升卡记录"
+        div.appendChild(text)
+        if (d.data == null) {
+            console.log("没有数据")
+            return
+        }
+        div.appendChild(makeTable(d.data))
     }
-    div.appendChild(makeTable(d.data))
-    let psts = document.querySelector("#psts")
-    psts && (psts.className = "pbm mbm bbda cl")
+
     interface rmsg {
         msg: string,
         code: number
@@ -127,5 +160,54 @@
             return u.searchParams.get('uid')
         }
         return null
+    }
+
+    async function dosome(uid: string, dom: HTMLElement, i: number) {
+        i++
+        if (i > 3) {
+            console.warn(`${uid} 失败超过3次，跳过`)
+            return
+        }
+        try {
+            const data = await getData(uid);
+            if (data.length == 0) {
+                return
+            }
+            const dd = document.createElement("dd")
+            let c = 0
+            data.forEach(v => {
+                if (v.operation.indexOf("提升卡") != -1) {
+                    c++
+                }
+            })
+            dd.textContent = `${c} 张`
+            const dt = document.createElement("dt")
+            const timg = document.createElement("img")
+            timg.src = "https://www.mcbbs.net/source/plugin/mcbbs_mcserver_plus/magic/magic_serverBump.small.gif"
+            timg.style["vertical-align"] = "middle"
+            dt.textContent = ` 提升`
+            dt.style.color = "red"
+            dt.style.fontWeight = "bold"
+            dt.insertBefore(timg, dt.firstChild)
+            const dl = dom?.parentNode?.parentNode?.parentNode?.querySelector("dl.pil")
+            dl?.appendChild(dt)
+            dl?.appendChild(dd)
+        } catch (e) {
+            console.warn(e)
+            await new Promise((r) => setTimeout(r, 2000))
+            await dosome(uid, dom, i)
+        }
+    }
+
+    async function getData(uid) {
+        let f = await fetch(`https://auto.xmdhs.com/getforuid?uid=` + uid);
+        let d = await f.json();
+        if (d.code != 0) {
+            throw new Error(d.msg);
+        }
+        if (d.data == null) {
+            return []
+        }
+        return d.data
     }
 })()
