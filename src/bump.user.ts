@@ -217,6 +217,9 @@
         if (d.code != 0) {
             throw new Error(d.msg);
         }
+        if (d.data == null) {
+            return []
+        }
         return d.data
     }
 })()
