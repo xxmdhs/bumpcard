@@ -1,12 +1,14 @@
 // ==UserScript==
 // @name         提升卡记录
 // @version      0.1.2
-// @include      https://www.mcbbs.net/home.php?mod=space*
-// @include      https://www.mcbbs.net/?*
+// @match        https://www.mcbbs.net/home.php?mod=space*
+// @match        https://www.mcbbs.net/?*
+// @match        https://www.mcbbs.net/forum.php?mod=viewthread&tid=*
+// @match        https://www.mcbbs.net/thread-*.html
 // @author       xmdhs
-// @license MIT
+// @license      MIT
 // @description  查看用户的提升卡使用记录
-// @namespace https://greasyfork.org/users/166541
+// @namespace    https://greasyfork.org/users/166541
 // ==/UserScript==
 
 (async () => {
