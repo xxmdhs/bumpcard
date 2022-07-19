@@ -21,7 +21,7 @@
             return
         }
         let i = 0
-        for (const dom of doms) {
+        for (const dom of Array.from(doms)) {
             i++
             if (!(dom instanceof HTMLAnchorElement)) {
                 continue
@@ -169,6 +169,11 @@
             return
         }
         try {
+            let d: data = {
+                data: [],
+                msg: "",
+                code: 0
+            }
             const data = await getData(uid);
             if (data.length == 0) {
                 return
@@ -184,7 +189,7 @@
             const dt = document.createElement("dt")
             const timg = document.createElement("img")
             timg.src = "https://www.mcbbs.net/source/plugin/mcbbs_mcserver_plus/magic/magic_serverBump.small.gif"
-            timg.style["vertical-align"] = "middle"
+            timg.style.verticalAlign = "middle"
             dt.textContent = ` 提升`
             dt.style.color = "red"
             dt.style.fontWeight = "bold"
@@ -199,14 +204,16 @@
         }
     }
 
-    async function getData(uid) {
+    async function getData(uid: string): Promise<data["data"]> {
         let f = await fetch(`https://auto.xmdhs.com/getforuid?uid=` + uid);
-        let d = await f.json();
+        let d: data = {
+            data: [],
+            msg: "",
+            code: 0
+        }
+        d = await f.json();
         if (d.code != 0) {
             throw new Error(d.msg);
-        }
-        if (d.data == null) {
-            return []
         }
         return d.data
     }
