@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         提升卡记录
-// @version      0.1.2
+// @version      0.1.4
 // @match        https://www.mcbbs.net/home.php?mod=space*
 // @match        https://www.mcbbs.net/?*
 // @match        https://www.mcbbs.net/forum.php?mod=viewthread&tid=*
