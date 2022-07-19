@@ -41,20 +41,24 @@ func NewSql(filename string) (*DB, error) {
 	return db, nil
 }
 
-func (db *DB) Del(tid int) error {
-	_, err := db.db.Exec(`DELETE FROM actions WHERE tid = ?`, tid)
+func Del(tx *sqlx.Tx, tid int) error {
+	_, err := tx.Exec(`DELETE FROM actions WHERE tid = ?`, tid)
 	if err != nil {
 		return fmt.Errorf("Del: %w", err)
 	}
 	return nil
 }
 
-func (db *DB) Save(data ActionData) error {
-	_, err := db.db.NamedExec(`INSERT INTO actions (operation, time, uid, name, tid) VALUES (:operation, :time, :uid, :name, :tid)`, data)
+func Save(tx *sqlx.Tx, data ActionData) error {
+	_, err := tx.NamedExec(`INSERT INTO actions (operation, time, uid, name, tid) VALUES (:operation, :time, :uid, :name, :tid)`, data)
 	if err != nil {
 		return fmt.Errorf("Save: %w", err)
 	}
 	return nil
+}
+
+func (db *DB) NewTx() (*sqlx.Tx, error) {
+	return db.db.Beginx()
 }
 
 func (db *DB) Close() error {

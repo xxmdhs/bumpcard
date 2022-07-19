@@ -67,27 +67,34 @@ func get(s *sql.DB, fid int) {
 					panic(err)
 				}
 				err = retry.Do(func() (err error) {
-					return s.Del(tid)
+					tx, err := s.NewTx()
+					defer tx.Rollback()
+					if err != nil {
+						return err
+					}
+					err = sql.Del(tx, tid)
+					if err != nil {
+						return err
+					}
+					for _, v := range l {
+						d := sql.ActionData{
+							Operation: v.Operation,
+							Time:      v.Time,
+							UID:       v.UID,
+							Name:      v.Name,
+							TID:       v.TID,
+						}
+						err = sql.Save(tx, d)
+						if err != nil {
+							return err
+						}
+					}
+					return tx.Commit()
 				}, retryOpts...)
 				if err != nil {
 					panic(err)
 				}
-				for _, v := range l {
-					d := sql.ActionData{
-						Operation: v.Operation,
-						Time:      v.Time,
-						UID:       v.UID,
-						Name:      v.Name,
-						TID:       v.TID,
-					}
 
-					err := retry.Do(func() (err error) {
-						return s.Save(d)
-					}, retryOpts...)
-					if err != nil {
-						panic(err)
-					}
-				}
 			}(v)
 			if t >= threads {
 				w.Wait()
