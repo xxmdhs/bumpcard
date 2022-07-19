@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         提升卡记录
-// @version      0.1.4
+// @version      0.1.5
 // @match        https://www.mcbbs.net/home.php?mod=space*
 // @match        https://www.mcbbs.net/?*
 // @match        https://www.mcbbs.net/forum.php?mod=viewthread&tid=*
@@ -91,7 +91,7 @@
         }[]
     }
 
-    function countData(data: data["data"]): { [tid: number]: { count: number, lastime: number } } {
+    function countData(data: data["data"]): { count: number, lastime: number, tid: number }[] {
         let m: { [tid: number]: { count: number, lastime: number } } = {}
         for (const v of data) {
             if (v.operation.indexOf("提升卡") == -1) {
@@ -104,7 +104,18 @@
                 v.time > m[v.tid].lastime && (m[v.tid].lastime = v.time)
             }
         }
-        return m
+        let l: { count: number, lastime: number, tid: number }[] = []
+        for (const key in m) {
+            let v = m[key]
+            l.push({
+                count: v.count,
+                lastime: v.lastime,
+                tid: Number(key)
+            })
+        }
+
+        l.sort((a, b) => b.lastime - a.lastime)
+        return l
     }
 
     function makeTable(data: data["data"]): HTMLTableElement {
@@ -117,12 +128,12 @@
         tbody.appendChild(tr)
         tr.innerHTML = `<th class="xw1">tid</th><th class="xw1">数量</th><th class="xw1">上一次顶贴时间</th>`
 
-        for (const v in c) {
+        for (const v of c) {
             let trr = document.createElement("tr")
             tbody.appendChild(trr)
-            addTr(trr, `<a href="https://www.mcbbs.net/thread-${v}-1-1.html" target="_blank">${v}</a>`, true)
-            addTr(trr, String(c[v].count))
-            addTr(trr, transformTime(c[v].lastime))
+            addTr(trr, `<a href="https://www.mcbbs.net/thread-${v.tid}-1-1.html" target="_blank">${v.tid}</a>`, true)
+            addTr(trr, String(v.count))
+            addTr(trr, transformTime(v.lastime))
         }
         return table
     }
@@ -171,11 +182,6 @@
             return
         }
         try {
-            let d: data = {
-                data: [],
-                msg: "",
-                code: 0
-            }
             const data = await getData(uid);
             if (data.length == 0) {
                 return
