@@ -43,7 +43,7 @@ func GetForumPage(fid int, cookie string) (int, error) {
 	}
 	l := pageReg.FindSubmatch(b)
 	if len(l) != 2 {
-		return 0, ErrNotFound
+		return 1, nil
 	}
 
 	i, err := strconv.Atoi(string(l[1]))
