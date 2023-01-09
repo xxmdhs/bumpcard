@@ -72,7 +72,7 @@ func get(s *sql.DB, fid int) {
 					if err != nil {
 						return err
 					}
-					err = sql.Del(tx, tid)
+					err = s.Del(tx, tid)
 					if err != nil {
 						return err
 					}
@@ -84,7 +84,7 @@ func get(s *sql.DB, fid int) {
 							Name:      v.Name,
 							TID:       v.TID,
 						}
-						err = sql.Save(tx, d)
+						err = s.Save(tx, d)
 						if err != nil {
 							return err
 						}

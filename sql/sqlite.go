@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -41,7 +42,7 @@ func NewSql(filename string) (*DB, error) {
 	return db, nil
 }
 
-func Del(tx *sqlx.Tx, tid int) error {
+func (db *DB) Del(tx *sqlx.Tx, tid int) error {
 	_, err := tx.Exec(`DELETE FROM actions WHERE tid = ?`, tid)
 	if err != nil {
 		return fmt.Errorf("Del: %w", err)
@@ -49,7 +50,7 @@ func Del(tx *sqlx.Tx, tid int) error {
 	return nil
 }
 
-func Save(tx *sqlx.Tx, data ActionData) error {
+func (db *DB) Save(tx *sqlx.Tx, data ActionData) error {
 	_, err := tx.NamedExec(`INSERT INTO actions (operation, time, uid, name, tid) VALUES (:operation, :time, :uid, :name, :tid)`, data)
 	if err != nil {
 		return fmt.Errorf("Save: %w", err)
@@ -65,9 +66,9 @@ func (db *DB) Close() error {
 	return db.db.Close()
 }
 
-func (db *DB) GetForUID(uid int) ([]ActionData, error) {
+func (db *DB) GetForUID(cxt context.Context, uid int) ([]ActionData, error) {
 	var data []ActionData
-	err := db.db.Select(&data, `SELECT operation, time, uid, name, tid FROM actions WHERE uid = ?`, uid)
+	err := db.db.SelectContext(cxt, &data, `SELECT operation, time, uid, name, tid FROM actions WHERE uid = ?`, uid)
 	if err != nil {
 		return nil, fmt.Errorf("GetForUID: %w", err)
 	}

@@ -25,8 +25,11 @@ func Server(port int, db *sql.DB) {
 
 func getForUIDH(db *sql.DB) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
+		cxt := r.Context()
+
 		rw.Header().Set("Access-Control-Allow-Origin", "*")
 		rw.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		rw.Header().Set("cache-control", "max-age=3600")
 
 		uid := r.FormValue("uid")
 		if uid == "" {
@@ -48,7 +51,7 @@ func getForUIDH(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(rw).Encode(d)
 			return
 		}
-		cards, err := db.GetForUID(uidi)
+		cards, err := db.GetForUID(cxt, uidi)
 		if err != nil {
 			d := data{
 				Code: 3,
